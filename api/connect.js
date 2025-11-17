@@ -41,7 +41,7 @@ const axiosOpt = {
 
 
 const REMOTE_USERS_URL = process.env.REMOTE_USERS_URL
-  || "https://raw.githubusercontent.com/xcvisimilarity-latest/xcvidatabase/refs/heads/main/xcvivip.json";
+  || "https://raw.githubusercontent.com/xcvisimilarity-latest/xcvidatabase/refs/heads/main/version3vip.json";
 
 
 
