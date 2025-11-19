@@ -298,7 +298,7 @@ function displayGlobalSenders(globalSenders) {
               <span class="sender-number">${sender.phone}</span>
               <span class="sender-status connected">
                 <i class="fas fa-globe" style="margin-right: 4px;"></i>
-                Global - Aktif
+                Aktif
               </span>
             </div>
             <button class="use-global-sender-btn" data-name="${sender.name}" data-phone="${sender.phone}">
