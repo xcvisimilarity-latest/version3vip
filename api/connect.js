@@ -236,7 +236,11 @@ export default async function handler(req, res) {
       !path.includes("login") &&
       !path.includes("users") &&
       !path.includes("senders") &&
-      !path.includes("create-account")
+      !path.includes("create-account") &&
+      !path.includes("system-stats") &&
+      !path.includes("session-details") &&
+      !path.includes("performance") &&
+      !path.includes("dashboard")
     ) {
       const resp = await axios.get(`${base}/status`, axiosOpt);
       const data = resp.data || {};
