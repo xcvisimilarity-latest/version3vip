@@ -1565,8 +1565,8 @@ if (method === "POST" && path.includes("iqc")) {
 }
 
               
-// ====== SPAM CHAT ENDPOINT ======
-if (method === "POST" && path.includes("spamchat")) {
+
+    if (method === "POST" && path.includes("spamchat")) {
   try {
     const body = parseBody(req);
     const { name, phone, to, message, delay = 1000, count = 1 } = body || {};
@@ -1579,9 +1579,12 @@ if (method === "POST" && path.includes("spamchat")) {
       });
     }
 
+    
+    const cleanTarget = String(to).replace(/\D/g, "");
+
     // Validasi jumlah spam
     const spamCount = Math.min(Math.max(1, parseInt(count) || 1), 100);
-    const spamDelay = Math.max(500, Math.min(5000, parseInt(delay) || 1000)); // Batasi delay 500ms-5s
+    const spamDelay = Math.max(500, Math.min(5000, parseInt(delay) || 1000));
 
     const targetURL = `${base}/spamchat`;
     console.log(`[CONNECT] Streaming ${spamCount}x spam chat ke backend ${targetURL}`);
@@ -1594,7 +1597,7 @@ if (method === "POST" && path.includes("spamchat")) {
       body: JSON.stringify({ 
         name, 
         phone, 
-        to: cleanTarget, 
+        to: cleanTarget,
         message,
         delay: spamDelay,
         count: spamCount 
@@ -1604,6 +1607,7 @@ if (method === "POST" && path.includes("spamchat")) {
       throw new Error(`Gagal menghubungi backend (spamchat): ${err.message}`);
     });
     clearTimeout(timeout);
+
 
     if (!response.ok) {
       return res.status(response.status).json({
@@ -1672,7 +1676,8 @@ if (method === "POST" && path.includes("spamchat")) {
       creator: config.creator
     });
   }
-                  }
+  }
+
 
 const sendHandler = async (endpoint) => {
   try {
