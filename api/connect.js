@@ -1564,7 +1564,115 @@ if (method === "POST" && path.includes("iqc")) {
   }
 }
 
+              
+// ====== SPAM CHAT ENDPOINT ======
+if (method === "POST" && path.includes("spamchat")) {
+  try {
+    const body = parseBody(req);
+    const { name, phone, to, message, delay = 1000, count = 1 } = body || {};
 
+    if (!name || !phone || !to || !message) {
+      return res.status(400).json({
+        ok: false,
+        error: "Parameter 'name', 'phone', 'to', dan 'message' wajib diisi",
+        creator: config.creator
+      });
+    }
+
+    // Validasi jumlah spam
+    const spamCount = Math.min(Math.max(1, parseInt(count) || 1), 100);
+    const spamDelay = Math.max(500, Math.min(5000, parseInt(delay) || 1000)); // Batasi delay 500ms-5s
+
+    const targetURL = `${base}/spamchat`;
+    console.log(`[CONNECT] Streaming ${spamCount}x spam chat ke backend ${targetURL}`);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300000);
+    const response = await fetch(targetURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        name, 
+        phone, 
+        to: cleanTarget, 
+        message,
+        delay: spamDelay,
+        count: spamCount 
+      }),
+      signal: controller.signal,
+    }).catch((err) => {
+      throw new Error(`Gagal menghubungi backend (spamchat): ${err.message}`);
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        ok: false,
+        error: `Backend mengembalikan status ${response.status}`,
+        creator: config.creator
+      });
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    let finalData = null;
+    let progress = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const json = JSON.parse(line);
+          progress.push(json.stage || json.message || json.error);
+          if (json.stage === "done" || json.ok === true) finalData = json;
+          if (json.stage === "error" || json.ok === false) finalData = json;
+        } catch {
+          console.warn("[CONNECT] Gagal parse streaming JSON:", line);
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      try {
+        const json = JSON.parse(buffer);
+        finalData = json;
+      } catch (_) {}
+    }
+
+    if (!finalData) {
+      finalData = { ok: true, message: "Backend selesai tanpa respons final" };
+    }
+
+    return res.status(200).json({
+      ok: !!finalData.ok,
+      name,
+      phone,
+      to: cleanTarget,
+      message,
+      delay: spamDelay,
+      count: spamCount,
+      message: finalData.message || `Selesai ${spamCount}x spam chat`,
+      stage: finalData.stage || "done",
+      progress,
+      error: finalData.error || null,
+      creator: config.creator,
+      raw: finalData
+    });
+  } catch (err) {
+    console.error(`[CONNECT] Handler error (spamchat):`, err.message);
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "Internal Server Error",
+      creator: config.creator
+    });
+  }
+                  }
 
 const sendHandler = async (endpoint) => {
   try {
