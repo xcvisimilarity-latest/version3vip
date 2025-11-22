@@ -1678,6 +1678,61 @@ if (method === "POST" && path.includes("iqc")) {
   }
   }
 
+              // ---------- SPOTIFY SEARCH (proxy ke api-faa) ----------
+if (method === "POST" && path.includes("spotify")) {
+  try {
+    // origin check
+    let origin = (req.headers.origin || "").replace(/\/$/, "");
+    const allowedOrigins = [
+      "https://wanzxcviv3vip.vercel.app",
+    ];
+    const isAllowed = allowedOrigins.some(o => origin.startsWith(o));
+    if (origin && !isAllowed) {
+      return res.status(403).json({
+        ok: false,
+        error: `Unauthorized access from ${origin}`,
+        creator: config.creator,
+      });
+    }
+
+    const body = await parseBody(req);
+    const query = (body.query || body.q || '').trim();
+    
+    if (!query) {
+      return res.status(400).json({
+        ok: false,
+        error: "Parameter 'query' wajib diisi",
+        creator: config.creator,
+      });
+    }
+
+    const apiUrl = `https://api-faa.my.id/faa/spotify-play?q=${encodeURIComponent(query)}`;
+    const apiResp = await axios.get(apiUrl, { timeout: 20000 });
+
+    const data = apiResp.data || {};
+    if (!data.status || !data.info) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lagu tidak ditemukan",
+        creator: config.creator,
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      result: data,
+      creator: config.creator,
+    });
+    
+  } catch (err) {
+    console.error("[SPOTIFY] error:", err.message);
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "Gagal mencari lagu di Spotify",
+      creator: config.creator,
+    });
+  }
+}
 
 const sendHandler = async (endpoint) => {
   try {
